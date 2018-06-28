@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h> 
+#include <math.h>
 
 
 typedef struct noh Noh;
@@ -171,8 +172,8 @@ int main(int argc, char const *argv[]){
     
     int atingido[n];
     Aresta arestas[n*n];
-   // int pai[n];
-    double somaE= 0.0;
+    int pai[n];
+    double d[n];
 
     grafo.V = (Fila **) malloc(n*sizeof(Fila*));
     for (int i = 0; i < n; ++i){
@@ -181,65 +182,64 @@ int main(int argc, char const *argv[]){
         grafo.V[i]->inicio = NULL;
         grafo.V[i]->fim = NULL;
     	
-    	atingido[i] = 0;
-    	//pai[i] = -1;
     }
 
     while(scanf("%d %d %lf", &v1, &v2, &peso) == 3){
         enfila(grafo.V[v1-1], v2-1, peso);
-        enfila(grafo.V[v2-1], v1-1, peso);
 
     }
 
-// PRIM
+// Dijkstra
 
-   	Noh H[n];
-   	int n_H = 0;
-
-   	atingido[0] = 1;
-	v = grafo.V[0]->inicio;
-   	for(int i = 0; i < grafo.V[0]->tamanho; i++){
-   		atingido[v->chave] = 1;
-   		incluirHeap(H, v->chave, v->peso, &n_H);
-   		
+    Noh H[n];
+    int n_H = 0;
 
 
-   		v = v->proximo;
-   	}
+
+    d[0] = 0.0;
+    atingido[0] = 1;
+    incluirHeap(H, 0, d[0], &n_H);
+    for (int i = 1; i < n; i++){
+        atingido[i] = 0;
+        d[i] = INFINITY;
+        pai[i] = -1;
+        incluirHeap(H, i, d[i], &n_H);
+    }
+
 
    	Noh aux;
+    int vi;
    	while(n_H > 0){
-
+  
    		aux = removerMin(H, &n_H);
    		u = &aux;
 
-   		somaE += u->peso;
-   		atingido[u->chave] = 2;
-   		v = grafo.V[u->chave]->inicio;
-   		for (int i = 0; i < grafo.V[u->chave]->tamanho && v != NULL; i++){
 
-   			if(atingido[v->chave] == 0){
-   				atingido[v->chave] = 1;
-   				incluirHeap(H, v->chave, v->peso, &n_H);
+      v = grafo.V[u->chave]->inicio;
+      for (int i = 0; i < grafo.V[u->chave]->tamanho && v != NULL; i++){
+        if((d[u->chave] + v->peso) < d[v->chave]){
+          d[v->chave] = d[u->chave] + v->peso;
+          pai[v->chave] = u->chave;
+          vi = encontrarHeap(H, v->chave, &n_H);
+          aumentarPrio(H, vi, d[u->chave] + v->peso);
+        }
+        v = v->proximo;
+      }
+    }
 
 
-   			}else{
-   				int iv = encontrarHeap(H, v->chave, &n_H);
-   				if(iv >= 0 && v->peso < H[iv].peso){
-   					alterarPrio(H, iv, v->peso, &n_H);
-
-   				}
-   			}
-   			v = v->proximo;
-   		}
-   	}
-
-   	printf("%.3lf\n", somaE);
+    for (int i = 0; i < n; i++){
+      if(d[i] == INFINITY)
+        printf("%d INFINITO\n", i+1);
+      else 
+        printf("%d %.3lf\n", i+1, d[i]);
+      
+    }
 
 
     
 
 
-	return 0;
+  return 0;
 }
 

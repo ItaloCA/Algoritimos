@@ -1,87 +1,151 @@
 #include <stdio.h>
+#include <stdlib.h> 
 
-int paraent(int i){
-	return i/2;
-}
 
-int left(int i){
+typedef struct noh Noh;
+
+typedef struct noh{
+    int chave;
+    double peso;
+    Noh *proximo;
+} Noh; 
+
+int esq(int i){
 	return 2*i;
 }
 
-int right(int i){
+int dir(int i){
 	return 2*i+1;
 }
 
-void max_heapify(int* A, int i, int m){
-	int l = left(i);
-	int r = right(i);
-	int maior = 0;
-	if (l <= m && A[l] > A[i]){
-		maior = l;
+int pai(int i){
+	return i/2;
+}
+
+void descer(Noh H[], int i, int* ndeH){
+	
+	int e = esq(i);
+	int d = dir(i);
+	int menor = -1;
+	if(e < *ndeH && H[e].peso < H[i].peso){
+		menor = e;
 	}else{
-		maior = i;
+		menor = i;
 	}
-
-	if (r <= m && A[r] > A[maior]){
-		maior = r;
+	if(d< *ndeH && H[d].peso < H[menor].peso){
+		menor = d;
 	}
+	if(menor != i){
+		Noh p = H[i];
+		H[i] = H[menor];
+		H[menor] = p; 
+		descer(H, menor, ndeH);
+	}
+	
+}
 
-	if (maior != i){
-		int aux  = A[i];
-		A[i]     = A[maior];
-		A[maior] = aux;
-
-		max_heapify(A,maior,m);
+void criarHeap(Noh H[], int* ndeH){
+	for (int i = *ndeH/2; i >= 0; i--){
+		descer(H, i, ndeH);
 	}
 }
 
-void build_max_heap(int* A, int m){
-	for (int i = m/2; i >= 1 ; --i){
-		max_heapify(A, i, m);
+Noh removerMin(Noh H[], int* ndeH){
+	if(*ndeH == 0){
+		Noh nulo;
+		nulo.chave = -9999.9999;
+		return nulo;
+	}
+	Noh min = H[0];
+	H[0] = H[*ndeH - 1];
+	*ndeH = *ndeH - 1;
+	if(*ndeH>=1)
+		descer(H, 0, ndeH);
+	return min;
+}
+
+void aumentarPrio(Noh H[], int i, double k){
+	H[i].peso = k;
+	while(i>=1 && H[pai(i)].peso > H[i].peso){
+		Noh p = H[i];
+		H[i] = H[pai(i)];
+		H[pai(i)] = p;
+		i = pai(i);
+	}
+	
+}
+
+void alterarPrio(Noh H[], int i, double k, int* ndeH){
+
+	if(k <= H[i].peso)
+		aumentarPrio(H, i, k);
+	else{
+		H[i].peso = k;
+		descer(H, i, ndeH);
 	}
 }
 
-void heapsort(int* A, int m){
-	printf("%d\n", A[0]);
-	build_max_heap(A, m);
-	int l = 0;
-	for (int i = m; i >= 2; --i){
-		l = left(i);
-		int aux  = A[i];
-		A[i]     = A[l];
-		A[l] 	 = aux;
-// // 
-		m = m-1;
-		max_heapify(A, l, m);
+
+
+void incluirHeap(Noh H[], int v, double k, int* ndeH){
+	H[*ndeH].chave = v;
+	H[*ndeH].peso = -1.0;
+	*ndeH = *ndeH + 1;
+	aumentarPrio(H, (*ndeH)-1, k);
+}
+
+int encontrarHeap(Noh H[], int v, int* ndeH){
+	for (int i = 0; i < *ndeH; ++i){
+		if (H[i].chave == v){
+			return i;
+		}
 	}
+	return -1;
 }
 
+int main(int argc, char const *argv[]){
+
+	Noh H[10];
+	int n = 0;
+	incluirHeap(H,  1, 4.0, &n);
+
+	incluirHeap(H,  2, 5.0, &n);
+
+	incluirHeap(H,  4, 1.0, &n);
+
+	incluirHeap(H,  5, 3.0, &n);
 
 
-int heap_maximum(int* A){
-	return A[1];
-}
 
-int heap_extract_max(int* A, int m){
-	if (m < 1){
-		// printf("heap underflow.\n");
+	for (int i = 0; i < n; ++i)	{
+		printf("%d %f\n", H[i].chave, H[i].peso);
+		if(i == 2 || i == 4 || i == 8 || i == 16)
+			printf("------------\n");
 	}
-	int max  = A[1];
-	A[1] = A[m];
-	m = m-1;
-	max_heapify(A, 1, m);
-	return max;
-}
 
+	
+	
+	alterarPrio(H, 3, 2.0, &n);
+	alterarPrio(H, 0, 4.0, &n);
 
+	for (int i = 0; i < n; ++i)	{
+		printf("%d %f\n", H[i].chave, H[i].peso);
+		if(i == 2 || i == 4 || i == 8 || i == 16)
+			printf("------------\n");
+	}
 
-
-int main(){
-	int A[] = {1, 5, 4, 9, 3, 6, 7, 8, 2};
-	heapsort(A, 9);
-	for (int i = 0; i < 9; ++i)
-	{
-		printf("maior valor %d\n", A[i]);
+	printf("removendo min\n");
+	Noh min;
+	while(n > 0){
+		min = removerMin(H,&n);
+		printf("%d %f\n", min.chave, min.peso);	
+	}
+	
+	printf("heap final\n");
+	for (int i = 0; i < n; ++i)	{
+		printf("%d %f\n", H[i].chave, H[i].peso);
+		if(i == 2 || i == 4 || i == 8 || i == 16)
+			printf("------------\n");
 	}
 
 	return 0;
